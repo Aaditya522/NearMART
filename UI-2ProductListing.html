@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="UI-2ProductListing.css" rel="stylesheet">
+    <title>NearMART - Product Listing</title>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js"></script>
+</head>
+<body>
+    <div class="promo-banner">
+    <div class="textlogo">
+        <span><h2 class="text1">Near</h2><h2 class="text2">MART</h2></span>
+        <img src="logo.png" class="logo">
+    </div>
+
+    <input class="search-bar" type="text" id="searchInput" placeholder="Search products..." oninput="filterProducts()">
+    <button class="search-bar-button" id="search-bar-button" onclick="searchProducts()"><i class="fas fa-search"></i></button>
+    </div><!-- banner -->
+
+
+    <div class="product-grid" id="productGrid">
+        <!--PRODUCTS-->
+    </div>
+
+    <footer>
+        <a href="UI-2.html">
+            <div class="footer-icon"><i class="fas fa-home"></i> Home</div>
+        </a>
+        <a href="Cart.html">
+            <div class="footer-icon"><i class="fas fa-shopping-cart"></i> Cart</div>
+        </a>
+
+        <div class="filters">
+            <select  class="categoryFilter" id="categoryFilter" onchange="filterProducts()">
+                <option value="">All Products</option>
+            </select>
+        </div>
+    </footer>
+
+        <div class="popup" id="popup"> <!--POP-UP-->
+                <div class="popupNavbar">
+                    <h2>Discover Your Daily Essentials at Your Fingertips!</h2>
+                    <button onclick="closePopup()" class="pop-up-close-btn">Close</button>
+                <div>
+                <div class="popupContent" id="popupContent">
+                      <!--Products-->
+                </div>
+         </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, updateDoc, arrayUnion, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+    authDomain: "nearmart-2ff64.firebaseapp.com",
+    projectId: "nearmart-2ff64",
+    storageBucket: "nearmart-2ff64.appspot.com",
+    messagingSenderId: "342104031673",
+    appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app); // Initialize Firebase Auth
+
+let allProducts = [];
+async function fetchProducts() {
+    const productGrid = document.getElementById('productGrid');
+    productGrid.innerHTML = '';
+
+    const querySnapshot = await getDocs(collection(db, 'products'));
+    allProducts = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id, // Include the document ID
+            name: data.productName || 'Unnamed Product',
+            category: data.productCategory || 'Uncategorized',
+            price: data.productPrice !== undefined ? `₹${data.productPrice}` : 'Price Not Available',
+            description: data.productDescription || 'No description available',
+            imageUrl: data.imageUrl || data.imageURL || 'https://via.placeholder.com/150',
+        };
+    });
+
+    populateFilters();
+    displayProducts(allProducts);
+}
+
+function displayProducts(products) {
+    const productGrid = document.getElementById('productGrid');
+    productGrid.innerHTML = products.map(product => `
+            <div class="product-card">
+                <a class="image-div" href="product-details.html?id=${product.id}" class="product-card-link">
+                    <img src="${product.imageUrl}" alt="${product.name}">
+                </a>
+                <h3>${product.name}</h3>
+                <p>Price: ${product.price}</p>
+                <button class="add_to_cart" data-product-id="${product.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
+            </div>
+    `).join('');
+
+    // Add event listeners to the newly created "Add to Cart" buttons
+    const addToCartButtons = document.querySelectorAll('.product-card .add_to_cart'); // Target buttons within the card
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the link from navigating
+            addToCart(event);
+        });
+    });
+}
+
+async function addToCart(event) {
+    const productId = event.target.dataset.productId;
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const db = getFirestore();
+
+    if (user) {
+        const userId = user.uid;
+        const cartRef = doc(db, 'carts', userId);
+
+        try {
+            // Try to update the document. If it doesn't exist, it will throw an error.
+            await updateDoc(cartRef, {
+                items: arrayUnion(productId)
+            });
+            alert('Item added to cart!');
+        } catch (error) {
+            // If the document doesn't exist, create it.
+            if (error.code === 'not-found') {
+                await setDoc(cartRef, {
+                    items: [productId] // Initialize the cart with the first item
+                });
+                alert('Item added to cart!');
+            } else {
+                console.error("Error adding to cart: ", error);
+                alert('Could not add item to cart. Please try again.');
+            }
+        }
+    } else {
+        alert('Please sign in to add items to your cart.');
+    }
+}
+
+function populateFilters() {
+    const categories = [...new Set(allProducts.map(p => p.category?.trim().toLowerCase()).filter(Boolean))];
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter.innerHTML = `<option value="">All Products</option>`;
+    categories.forEach(cat => categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`);
+}
+
+window.filterProducts = function filterProducts() {
+    const category = document.getElementById('categoryFilter').value.toLowerCase();
+    const filtered = category ? allProducts.filter(p => p.category?.trim().toLowerCase() === category) : allProducts;
+    displayProducts(filtered);
+}
+
+window.onload = fetchProducts;
+
+function displaySearchResults(products) {
+    const popupContent = document.getElementById('popupContent');
+    popupContent.innerHTML = products.map(p => `
+            <div class="product-pop">
+                <div class="image-div">
+                    <img src="${p.imageUrl}" alt="${p.productName}">
+                </div>
+                <h3>${p.productName}</h3>
+                <p>Price: ₹${p.productPrice}</p>
+                <a href="product-details.html?id=${p.id}" class="product-pop-link">
+                    <button>View Product</button>
+                </a>
+                <button class="add_to_cart" data-product-id="${p.id}"><i class="fas fa-shopping-cart"></i>  Add To Cart</button>
+            </div>
+    `).join('');
+
+    const popupAddToCartButtons = popupContent.querySelectorAll('.product-pop .add_to_cart');
+    popupAddToCartButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the link from navigating
+            addToCart(event);
+        });
+    });
+}
+
+window.searchProducts = async function searchProducts() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const querySnapshot = await getDocs(collection(db, 'products'));
+    const results = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(p =>
+            p.productName.toLowerCase().includes(searchValue) ||
+            (p.productDescription && p.productDescription.toLowerCase().includes(searchValue))
+        );
+
+    const popup = document.getElementById('popup');
+    popup.style.display = "flex";
+
+    displaySearchResults(results); // Use the new function
+
+    document.getElementById('popup').style.display = 'block';
+}
+
+window.closePopup = function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+}
+</script>
+</body>
+</html>

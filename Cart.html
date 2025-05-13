@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NearMART - Your Cart</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js"></script>
+</head>
+<style>
+    .cart-container{
+        width: 100%;
+        height:auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        margin-bottom: 120px;
+    }
+    .nav{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width:100%;
+        font-size: x-large;
+    }
+
+    .nav button{
+        font-size: large;
+        color: #000000;
+        border-radius: 20%;
+        width: 50px;
+        height:50px;
+        background-color: rgba(149, 0, 255, 0);
+        border: 2px solid transparent;
+        transition: .3s;
+    }
+    .nav button:hover{
+        background-color: rgb(231, 229, 229);
+    }
+    
+
+    #cart-items{
+        background-color: rgba(208, 208, 211, 0.58);
+        backdrop-filter: blur(20px);
+        width: 100%;
+        padding:5px;
+        border: 1px solid rgb(134, 132, 132);
+        border-radius: 8px;
+    }
+
+    .cart-item{
+        color:white;
+        background: #691b9af0;
+        backdrop-filter: blur(50px);
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between; 
+    }
+    .product-image{
+        width:10%;
+        border-radius: 8px;
+    }
+    .product-info{
+        width:40%;
+        font-size: large;
+    }
+
+    .quantity{
+        display: flex;
+        flex-direction:column;
+        justify-content: space-between;
+        align-items: center;
+        width:40%;
+        gap:10px;
+    }
+
+    .delete-product{
+        width: 100%;
+        height:40px;
+        border-radius: 10px;
+        font-size: medium;
+        border-color: #000000;
+        background-color: rgb(249, 201, 42);
+    }
+
+    footer{
+        position: fixed;
+        z-index: 100;
+        width:100%;
+        height:70px;
+        padding:10px 0px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        bottom: 0;
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.349);
+    }
+    footer #cart-total{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width:50%;
+        height:70%;
+        font-size: x-large;
+        margin-left:20px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    footer button{
+        color:white;
+        margin-right:20px;
+        width:50%;
+        height:70%;
+        border-radius:5px;
+        background-color:#691b9a ;
+    }
+
+@media (max-width: 480px){
+    .nav{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        font-size: medium;
+    }
+    .delete-product{
+        width:90%;
+        height:30px;
+    }
+    .product-image{
+        width:20%;
+    }
+    .product-info{
+        width:40%;
+        font-size: medium;
+    }
+
+    .quantity{
+        display: flex;
+        flex-direction:column;
+        justify-content: space-between;
+        align-items: center;
+        width:30%;
+        gap:5px;
+    }
+    .nav button{
+        font-size: medium;
+        width: 30px;
+        height:30px;
+    }
+}
+
+</style>
+<body>
+    <div class="cart-container">
+        <div class="nav">
+            <a href="UI-2ProductListing.html"><button><i class="fas fa-arrow-left"></i></button></a>
+            <h1>Your e-Cart</h1>
+        </div>
+        <div id="cart-items">
+
+        </div>
+
+        <footer>
+        <div id="cart-total"><!--TOTAL AMOUNT--></div>
+        <button id="checkout-button">Proceed to Checkout</button>
+        </footer>
+
+    </div>
+
+    <script type="module">
+        // Firebase initialization (same as your product listing page)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getFirestore, doc, getDoc, collection, updateDoc, arrayRemove, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+    authDomain: "nearmart-2ff64.firebaseapp.com",
+    projectId: "nearmart-2ff64",
+    storageBucket: "nearmart-2ff64.appspot.com",
+    messagingSenderId: "342104031673",
+    appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const cartItemsContainer = document.getElementById('cart-items');
+const cartTotalContainer = document.getElementById('cart-total');
+
+async function removeItemFromCart(productId){
+    const user = auth.currentUser;
+    if(user){
+        const userId = user.uid;
+        const cartRef = doc(db,'carts', userId);
+        const confirmation = confirm("Are you sure you want to remove this item from your cart?");
+
+        if (confirmation) {
+            try {
+                await updateDoc(cartRef, {
+                    items: arrayRemove(productId)
+                });
+                displayCartItems(userId);
+            } catch (error) {
+                console.error("Error removing item from cart: ", error);
+                alert("Could not remove item. Please try again.");
+            }
+        } else {
+            console.log("Remove item cancelled by user.");
+        }
+    } else {
+        alert("Please sign in to update your cart.");
+    }
+}
+async function updateItemQuantity(productId, newQuantityInput) {
+    const user = auth.currentUser;
+    if (user && newQuantityInput.value > 0) {
+        const userId = user.uid;
+        const cartRef = doc(db, 'carts', userId);
+        const productRef = doc(db, 'products', productId);
+
+        try {
+            const productSnap = await getDoc(productRef);
+            if (productSnap.exists()) {
+                const availableQuantity = productSnap.data().productQuantity;
+                const newQuantity = parseInt(newQuantityInput.value);
+
+                if (newQuantity <= availableQuantity) {
+                    const cartSnap = await getDoc(cartRef);
+                    if (cartSnap.exists() && cartSnap.data().items) {
+                        let currentItems = [...cartSnap.data().items]; // Create a copy to modify
+                        const existingCount = currentItems.filter(id => id === productId).length;
+                        const diff = newQuantity - existingCount;
+
+                        console.log("Updating quantity for:", productId);
+                        console.log("Requested quantity:", newQuantity);
+                        console.log("Available quantity:", availableQuantity);
+                        console.log("Existing count in cart:", existingCount);
+                        console.log("Difference:", diff);
+                        console.log("Current items before update:", currentItems);
+
+                        // Remove existing items
+                        currentItems = currentItems.filter(id => id !== productId);
+
+                        // Add the new quantity of items
+                        for (let i = 0; i < newQuantity; i++) {
+                            currentItems.push(productId);
+                        }
+
+                        console.log("Updated items array (in memory):", currentItems);
+
+                        await updateDoc(cartRef, { items: currentItems });
+
+                        const updatedCartSnap = await getDoc(cartRef); // Fetch updated cart
+                        if (updatedCartSnap.exists() && updatedCartSnap.data().items) {
+                            console.log("Updated items in cart (after write):", updatedCartSnap.data().items);
+                        }
+
+                        displayCartItems(userId); // Re-render the cart
+                    }
+                } else {
+                    alert(`Available stock for this product is ${availableQuantity}.`);
+                    newQuantityInput.value = availableQuantity; // Reset the input
+                    displayCartItems(userId); // Re-render to show correct total
+                }
+            } else {
+                alert("Product not found.");
+            }
+        } catch (error) {
+            console.error("Error updating item quantity: ", error);
+            alert("Could not update quantity. Please try again.");
+        }
+    } else if (newQuantityInput.value <= 0) {
+        removeItemFromCart(productId);
+    } else {
+        alert("Please sign in to update your cart.");
+    }
+}
+
+async function displayCartItems(userId) {
+    if (userId) {
+        const cartRef = doc(db, 'carts', userId);
+        const cartSnap = await getDoc(cartRef);
+
+        if (cartSnap.exists() && cartSnap.data().items) {
+            const productIds = cartSnap.data().items;
+            if (productIds.length > 0) {
+                const productsCollection = collection(db, 'products');
+                let productCounts = {};
+                let totalPrice = 0;
+                let productsInCartDetails = [];
+
+                for (const productId of productIds) {
+                    productCounts[productId] = (productCounts[productId] || 0) + 1;
+                }
+
+                const uniqueProductIds = Object.keys(productCounts);
+
+                async function fetchProductDetailsWithQuantity(productId) {
+                    const productDoc = await getDoc(doc(productsCollection, productId));
+                    if (productDoc.exists()) {
+                        return { id: productDoc.id, ...productDoc.data(), quantityInCart: productCounts[productId] };
+                    }
+                    return null;
+                }
+
+                const productsWithDetails = await Promise.all(uniqueProductIds.map(fetchProductDetailsWithQuantity));
+
+                cartItemsContainer.innerHTML = productsWithDetails.filter(p => p != null).map(product => {
+                    const itemTotalPrice = parseFloat(product.productPrice) * product.quantityInCart;
+                    totalPrice += itemTotalPrice;
+                    return `
+                        <div class="cart-item" data-product-id="${product.id}">
+                            <img class="product-image" src="${product.imageUrl || 'https://via.placeholder.com/50'}" alt="${product.productName}" width="50">
+                            <div class="product-info">
+                                <strong>${product.productName}</strong> - ₹${parseFloat(product.productPrice).toFixed(2)}
+                            </div>
+                            <div class="quantity">
+                                <label for="quantity-${product.id}" style="margin-right: 5px;">Qty:
+                                <input type="number" id="quantity-${product.id}" class="quantity-input" value="${product.quantityInCart}" min="1" style="width: 50px;"></label>
+                                <button class="delete-product" data-product-id="${product.id}">Delete</button>
+                                </div>
+                        </div>
+                    `;
+                }).join('');
+
+                cartTotalContainer.textContent = `Total: ₹${totalPrice.toFixed(2)}`;
+
+                // Add event listeners for delete buttons and quantity inputs (moved inside after rendering)
+                const deleteButtons = cartItemsContainer.querySelectorAll('.delete-product');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productId = this.dataset.productId;
+                        removeItemFromCart(productId);
+                    });
+                });
+
+                const quantityInputs = cartItemsContainer.querySelectorAll('.quantity-input');
+                quantityInputs.forEach(input => {
+                    input.addEventListener('change', function() {
+                        const productId = this.closest('.cart-item').dataset.productId;
+                        updateItemQuantity(productId, this);
+                    });
+                });
+
+            } else {
+                cartItemsContainer.textContent = 'Your cart is empty.';
+                cartTotalContainer.textContent = '';
+            }
+        } else {
+            cartItemsContainer.textContent = 'Your cart is empty.';
+            cartTotalContainer.textContent = '';
+        }
+    } else {
+        cartItemsContainer.textContent = 'Please sign in to view your cart.';
+        cartTotalContainer.textContent = '';
+    }
+}
+
+// Listen for authentication state changes
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        const userId = user.uid;
+        displayCartItems(userId);
+    } else {
+        cartItemsContainer.textContent = 'Please sign in to view your cart.';
+        cartTotalContainer.textContent = '';
+    }
+});
+    </script>
+</body>
+</html>

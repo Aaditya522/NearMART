@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NearMART - User Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Your existing styles here */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>User Sign-Up</h2>
+        <form id="user-sign-up">
+            <input type="text" id="fullName" placeholder="Full Name" required><br>
+            <input type="email" id="email" placeholder="Email" required><br>
+            <input type="password" id="password" placeholder="Password" required><br>
+            <input type="text" id="phone" placeholder="Phone Number" required><br>
+            <input type="text" id="street" placeholder="Street" required><br>
+            <input type="text" id="city" placeholder="City" required><br>
+            <input type="text" id="state" placeholder="State" required><br>
+            <input type="text" id="postalCode" placeholder="Postal Code" required><br>
+            <input type="text" id="country" placeholder="Country" required><br>
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+    apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+    authDomain: "nearmart-2ff64.firebaseapp.com",
+    projectId: "nearmart-2ff64",
+    storageBucket: "nearmart-2ff64.appspot.com",
+    messagingSenderId: "342104031673",
+    appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Sign-Up Form Submission
+  document.getElementById("user-sign-up").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    // Collect user data
+    const fullName = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const street = document.getElementById("street").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const state = document.getElementById("state").value.trim();
+    const postalCode = document.getElementById("postalCode").value.trim();
+    const country = document.getElementById("country").value.trim();
+
+    console.log("Attempting to sign up user...");
+
+    try {
+      // Sign up with Firebase Authentication
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      console.log("User created:", user.uid);
+
+      // Store user details in Firestore under 'users' collection
+      await db.collection("users").doc(user.uid).set({
+        uid: user.uid,
+        fullName,
+        email,
+        phone,
+        address: {
+          street,
+          city,
+          state,
+          postalCode,
+          country
+        },
+        userType: "customer",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      console.log("User data stored in Firestore.");
+
+      alert("User registered successfully.");
+      window.location.href = "Login.html";
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Signup failed: " + error.message);
+    }
+  });
+</script>
+</body>
+</html>

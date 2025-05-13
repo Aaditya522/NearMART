@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NearMART</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="UI-2.css">
+</head>
+<body>
+
+    <div class="promo-banner">
+        <div>
+            <div class="textlogo">
+                <span><h2 class="text1">Near</h2><h2 class="text2">MART</h2></span>
+                <img src="logo.png" class="logo">
+            </div>
+            <p>"Free Shipping"</p>
+        </div>
+        <header>Extra 10% Off</header>
+        <span class="promo-banner-img">
+            <img src="products.png" alt="images">
+        </span>
+    </div>
+
+    <main>
+        <section id="home" class="section">
+            <div class="container">
+                <h2>Bringing Your Local Market to You.</h2>
+                <a href="#daily-products" class="btn">Shop Now</a>
+            </div>
+        </section>
+
+        <section id="daily-products" class="section">
+            <div class="container">
+                <h3>Discover Local Essentials at Your Fingertips!</h3>
+                <div class="product-grid" id="daily-product-grid">
+                </div>
+            </div>
+        </section>
+
+        <section id="nearbyShops" class="section">
+            <div class="container">
+                <h2>Nearby Products, Just a Search Away</h2>
+                <div class="product-grid">
+                    <input class="search-bar" type="text" id="searchInput" placeholder="Just Enter the Shop Name...">
+                    <div class="filters">
+                        <select  class="cityFilter" id="cityFilter">
+                            <option value="">All Cities</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about-us" class="section">
+            <div class="container">
+                <h2>About Us</h2>
+                <p>
+                    We are committed to providing our customers with the best shopping
+                    experience, offering a wide range of products and exceptional customer
+                    service.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <div class="footer">
+        <a href="UI-2.html">
+            <div class="footer-icon"><i class="fas fa-home"></i><p>Home</p></div>
+        </a>
+
+        <a href="UI-2ProductListing.html">
+            <div class="footer-icon"><i class="fas fa-shopping-bag"></i><p>Products</p></div>
+        </a>
+        
+        <a href="Cart.html">
+            <div class="footer-icon"><i class="fas fa-shopping-cart"></i><p>Cart</p></div>
+        </a>
+
+        <a>
+        <div class="footer-icon" id="profileIcon"><i class="fas fa-user"></i><p>Profile</p></div>
+        </a>
+    </div>
+
+    <div id="userProfileModal">
+        <div>
+            <span id="closeProfileModal">&times;</span>
+            <h1>User Profile</h1>
+            <p><strong>Email:</strong></p><span id="userEmail">Not logged in</span>
+            <p><strong>UID:</strong></p><span id="userUID"></span>
+            <button id="logoutBtn" style="margin-top:20px; padding:10px 20px;">Logout</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+<script type="module">
+    // Your Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+    authDomain: "nearmart-2ff64.firebaseapp.com",
+    projectId: "nearmart-2ff64",
+    storageBucket: "nearmart-2ff64.appspot.com",
+    messagingSenderId: "342104031673",
+    appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
+};
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    const profileBtn = document.getElementById("profileIcon");
+    const modal = document.getElementById("userProfileModal");
+    const closeModal = document.getElementById("closeProfileModal");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    // Listen for auth state changes
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // Display user info if logged in
+            document.getElementById("userEmail").textContent = user.email;
+            document.getElementById("userUID").textContent = user.uid;
+
+            // Open modal when profile icon is clicked
+            profileBtn.addEventListener("click", () => {
+                modal.style.display = "flex"; // Show profile modal
+            });
+
+            // Logout functionality
+            logoutBtn.addEventListener("click", () => {
+                firebase.auth().signOut().then(() => {
+                    alert("Logged out successfully!");
+                    window.location.href = "login page.html"; // Redirect to login page
+                }).catch(error => {
+                    console.error("Logout Error", error);
+                });
+            });
+        } else {
+            // No user logged in
+            document.getElementById("userEmail").textContent = "No user logged in";
+            document.getElementById("userUID").textContent = "";
+
+            // Show alert and don't open the profile modal if no user is logged in
+            profileBtn.addEventListener("click", () => {
+                alert("Please Login, If registered");
+            });
+        }
+    });
+
+    // Close the profile modal
+    closeModal.onclick = () => {
+        modal.style.display = "none";
+    };
+
+    // Close the modal if clicked outside the modal content
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+    
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, updateDoc, setDoc, arrayUnion, getDoc, query, where } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let allProducts = []; // Store all products globally
+let cities = new Set(); // Use a Set to store unique cities
+let allShops = new Set(); // Store all shops
+
+async function fetchDailyProducts() {
+    const dailyProductGrid = document.getElementById('daily-product-grid');
+    dailyProductGrid.innerHTML = '';
+    
+
+    try {
+        const productsCollection = collection(db, 'products');
+        const productsSnapshot = await getDocs(productsCollection);
+        allProducts = productsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Extract city from shopLocation
+            const city = data.city|| "";
+            cities.add(city);
+             // Extract shopName and add it to the set
+            const shopName = data.shopName || 'Unknown Shop';
+            allShops.add(shopName);
+            return {
+                id: doc.id,
+                name: data.productName || 'Unnamed Product',
+                price: data.productPrice !== undefined ? `₹${data.productPrice}` : 'Price Not Available',
+                imageUrl: data.imageUrl || data.imageURL || 'https://via.placeholder.com/200',
+                shopName: shopName,
+                city: city, // Store the city
+            };
+        });
+
+        // Populate the city filter dropdown
+        const cityFilter = document.getElementById('cityFilter');
+        cityFilter.innerHTML = '<option value="">All Cities</option>'; //clear existing options
+
+        // Combine cities from products and shops
+        const combinedCities = new Set([...cities]); //avoid duplicates
+        combinedCities.forEach(city => {
+             if(city){
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+             }
+        });
+        
+        displayDailyProducts(allProducts.slice(0,15)); //show only 15 products
+       
+
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        dailyProductGrid.innerHTML = `<p>Error fetching products. Please try again later.</p>`;
+    }
+}
+
+
+
+function displayDailyProducts(products) {
+    const dailyProductGrid = document.getElementById('daily-product-grid');
+    dailyProductGrid.innerHTML = '';
+    
+        dailyProductGrid.innerHTML = products.map(product => 
+            `<div class="product-card">
+                <a class="image-div" href="product-details.html?id=${product.id}" class="product-card-link">
+                    <img src="${product.imageUrl}" alt="${product.name}">
+                </a>
+
+                <div class="info-div">
+                <h3>${product.name}</h3>
+                <p>Price: ${product.price}</p>
+                <p style="text-transform:uppercase; font-size:xx-small;color:rgb(36, 36, 36);">Shop: ${product.shopName}</p>
+                <button class="add_to_cart" data-product-id="${product.id}"><i class="fas fa-shopping-cart"></i>  Add To Cart</button>
+                </div>
+            </div>`
+        ).join('');
+    
+
+    // Attach event listeners to the "Add To Cart" buttons
+    const addToCartButtons = dailyProductGrid.querySelectorAll('.add_to_cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId; 
+            addToCart(productId); 
+        });
+    });
+}
+
+async function addToCart(productId) {
+    const user = auth.currentUser;
+    if (user) {
+        const userId = user.uid;
+        const cartRef = doc(db, 'carts', userId);
+
+        try {
+            const cartSnap = await getDoc(cartRef);
+            if (cartSnap.exists()) {
+                
+                await updateDoc(cartRef, {
+                    items: arrayUnion(productId)
+                });
+                console.log("Product added to cart!");
+                alert("Product added to cart!"); 
+            } else {
+                
+                await setDoc(cartRef, {
+                    items: [productId]
+                });
+                console.log("New cart created and product added!");
+                alert("Product added to cart!"); 
+            }
+        } catch (error) {
+            console.error("Error adding product to cart: ", error);
+            alert("Could not add product to cart. Please try again.");
+        }
+    } else {
+        alert("Please sign in to add products to your cart.");
+        
+    }
+}
+
+
+
+window.onload = () => {
+    fetchDailyProducts();
+
+    // Attach event listeners to the filter inputs *after* the DOM is fully loaded
+    document.getElementById('cityFilter').addEventListener('change', filterProducts);
+    document.getElementById('searchInput').addEventListener('input', filterProducts);
+    document.getElementById('search-bar-button').addEventListener('click', searchProducts);
+};
+
+
+
+function filterProducts() {
+    const selectedCity = document.getElementById('cityFilter').value;
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+    const filteredProducts = allProducts.filter(product => {
+        const cityMatch = !selectedCity || product.city === selectedCity;
+        const searchMatch = product.shopName.toLowerCase().includes(searchTerm);
+        return cityMatch && searchMatch;
+    });
+
+    displayDailyProducts(filteredProducts);
+}
+
+
+function searchProducts() {
+  filterProducts();
+}
+</script>
+</body>
+</html>

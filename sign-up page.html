@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NearMART - Customer Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login,signupCSS.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 class="text1">Near</h1>
+                <h1 class="text2">MART</h1>
+            </div>
+            <div><img src="logo.png" class="logo"></div>
+        </div>
+        <div class="login-box">
+            <form id="sign-up">
+                <h2>Customer SIGN-UP</h2>
+                <div class="input-box"><input placeholder="First Name" type="text" id="firstName" required></div>
+                <div class="input-box"><input placeholder="Last Name" type="text" id="lastName" required></div>
+                <div class="input-box"><input placeholder="Email" type="email" id="email" required></div>
+                <div class="input-box"><input placeholder="Password" type="password" id="pass" required></div>
+                <div class="input-box"><input placeholder="Phone" type="text" id="phone" required></div>
+                <div class="input-box"><input placeholder="Street" type="text" id="street" required></div>
+                <div class="input-box"><input placeholder="City" type="text" id="city" required></div>
+                <div class="input-box"><input placeholder="State" type="text" id="state" required></div>
+                <div class="input-box"><input placeholder="Postal Code" type="text" id="postalCode" required></div>
+                <div class="input-box"><input placeholder="Country" type="text" id="country" required></div>
+
+                <button type="submit" id="btn">Sign Up</button>
+
+                <div class="register-link">
+                    <p>Already have an account? <a href="login page.html">LOG IN</a></p>
+                </div>
+            </form>
+            <div class="skip"><a href="UI-2.html">Skip</a></div>
+        </div>
+    </div>
+
+<!-- <script src="signupJS.js"></script> -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+            apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+            authDomain: "nearmart-2ff64.firebaseapp.com",
+            projectId: "nearmart-2ff64",
+            storageBucket: "nearmart-2ff64.firebasestorage.app",
+            messagingSenderId: "342104031673",
+            appId: "1:342104031673:web:e02b3ca254dfdd0434f668",
+            measurementId: "G-5QQ286GZXP"
+        };
+
+// Initialize Firebase app and services
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Sign-up Form Submission
+document.getElementById("sign-up").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName = document.getElementById("lastName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("pass").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const street = document.getElementById("street").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const state = document.getElementById("state").value.trim();
+  const postalCode = document.getElementById("postalCode").value.trim();
+  const country = document.getElementById("country").value.trim();
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    await setDoc(doc(db, "customers", user.uid), {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address: { street, city, state, postalCode, country }
+    });
+
+    alert("Sign-up successful!");
+    window.location.href = "UI-2.html";
+
+  } catch (error) {
+    console.error("Error during sign-up:", error);
+    alert("Failed to sign up: " + error.message);
+  }
+});
+
+</script>
+
+</body>
+</html>
