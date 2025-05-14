@@ -245,14 +245,13 @@ async function fetchNearbyShops() {
                                 <h3>${shopData.businessName || "Unnamed Shop"}</h3>
                                 <p>City: ${shopData.address?.city || "Location Not Available"}</p>
                                 <a href="#daily-products" style="width:100%;">
-                                <button class="add_to_cart" data-shop-id="${doc.id}">View Products</button>
+                                    <button class="add_to_cart" id="view-products" data-shop-id="${doc.id}">View Products</button>
                                 </a>
                             `;
                             nearbyShopsGrid.appendChild(shopCard);
 
-                            shopCard.querySelector('.add_to_cart').addEventListener('click', () => {
+                            document.getElementById('view-products').addEventListener('click', () => {
                                 filterProductsByShop(doc.id, shopData.businessName);
-
                             });
                         });
                     } else {
@@ -301,40 +300,33 @@ async function fetchAllProducts() {
     }
 }
 
-async function filterProductsByShop(shopId, shopName) {
-    const productsGrid = document.getElementById("daily-products-grid");
-    if (!productsGrid) {
-        console.error("Error: Products grid not found.");
-        return;
-    }
+        async function filterProductsByShop(shopId, shopName) {
+            const productsGrid = document.getElementById("daily-products-grid");
+            productsGrid.innerHTML = "Loading products...";
 
-    try {
-        const productsSnapshot = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
-        productsGrid.innerHTML = ''; // Clear previous products
+            const productsSnapshot = await getDocs(query(collection(db, 'products'), where('retailerId', '==', shopId)));
+            productsGrid.innerHTML = "";
 
-        if (!productsSnapshot.empty) {
-            productsSnapshot.forEach((doc) => {
-                const productData = doc.data();
-                productsGrid.innerHTML += `
-                    <div class="product-card">
+            if(!productsSnapshot.empty){
+                productsSnapshot.forEach((doc)=>{
+                    const productData = doc.data();
+                    productsGrid.innerHTML += `
+                        <div class="product-card">
                         <a class="image-div" href="product-details.html?id=${doc.id}">
                             <img src="${productData.imageUrl}" alt="${productData.productName}">
                         </a>
                         <div class="info-div">
                             <h3>${productData.productName}</h3>
                             <p>Price: ₹${productData.productPrice}</p>
-                            <p class="shopName">Shop: ${shopName}</p>
+                            <p class="shopName">Shop: ${productData.shopName}</p>
                             <button class="add_to_cart" data-product-id="${doc.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
                         </div>
                     </div>`;
-            });
-        } else {
-            productsGrid.innerHTML = `<p>No products available for ${shopName}.</p>`;
+                });
+            } else{
+                productsGrid.innerHTML = `<p>No products available for ${shopName}.</p>`;
+            }
         }
-    } catch (error) {
-        console.error("Error fetching products for shop:", error);
-    }
-}
 
 fetchAllProducts();
 fetchNearbyShops();
