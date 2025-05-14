@@ -34,24 +34,17 @@
         <section id="daily-products" class="section">
             <div class="container">
                 <h3>Discover Local Essentials at Your Fingertips!</h3>
-                <div class="product-grid" id="daily-product-grid">
+                <div class="product-grid" id="daily-products-grid">
                 </div>
             </div>
         </section>
 
         <section id="nearbyShops" class="section">
-            <div class="container">
-                <h2>Nearby Products, Just a Search Away</h2>
-                <div class="product-grid">
-                    <input class="search-bar" type="text" id="searchInput" placeholder="Just Enter the Shop Name...">
-                    <div class="filters">
-                        <select  class="cityFilter" id="cityFilter">
-                            <option value="">All Cities</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <div class="container">
+        <h2>Nearby Products, Just a Search Away</h2>
+        <div class="shops-list"  id="nearby-shops-grid"></div>
+    </div>
+</section>
 
         <section id="about-us" class="section">
             <div class="container">
@@ -93,232 +86,258 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 <script type="module">
-    // Your Firebase config
-const firebaseConfig = {
-    apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
-    authDomain: "nearmart-2ff64.firebaseapp.com",
-    projectId: "nearmart-2ff64",
-    storageBucket: "nearmart-2ff64.appspot.com",
-    messagingSenderId: "342104031673",
-    appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
-};
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import { getFirestore, collection, getDocs, doc, updateDoc, setDoc, arrayUnion, getDoc, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+    const firebaseConfig = {
+        apiKey: "AIzaSyAPLEIol1mgnMs4VDAeRmMTFkH2JeOFT1U",
+        authDomain: "nearmart-2ff64.firebaseapp.com",
+        projectId: "nearmart-2ff64",
+        storageBucket: "nearmart-2ff64.appspot.com",
+        messagingSenderId: "342104031673",
+        appId: "1:342104031673:web:e02b3ca254dfdd0434f668"
+    };
 
-    const profileBtn = document.getElementById("profileIcon");
-    const modal = document.getElementById("userProfileModal");
-    const closeModal = document.getElementById("closeProfileModal");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    // Listen for auth state changes
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // Display user info if logged in
-            document.getElementById("userEmail").textContent = user.email;
-            document.getElementById("userUID").textContent = user.uid;
+        const profileBtn = document.getElementById("profileIcon");
+        const modal = document.getElementById("userProfileModal");
+        const closeModal = document.getElementById("closeProfileModal");
+        const logoutBtn = document.getElementById("logoutBtn");
 
-            // Open modal when profile icon is clicked
-            profileBtn.addEventListener("click", () => {
-                modal.style.display = "flex"; // Show profile modal
-            });
+        // Listen for auth state changes
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Display user info if logged in
+                document.getElementById("userEmail").textContent = user.email;
+                document.getElementById("userUID").textContent = user.uid;
 
-            // Logout functionality
-            logoutBtn.addEventListener("click", () => {
-                firebase.auth().signOut().then(() => {
-                    alert("Logged out successfully!");
-                    window.location.href = "login page.html"; // Redirect to login page
-                }).catch(error => {
-                    console.error("Logout Error", error);
+                // Open modal when profile icon is clicked
+                profileBtn.addEventListener("click", () => {
+                    modal.style.display = "flex"; // Show profile modal
                 });
-            });
-        } else {
-            // No user logged in
-            document.getElementById("userEmail").textContent = "No user logged in";
-            document.getElementById("userUID").textContent = "";
 
-            // Show alert and don't open the profile modal if no user is logged in
-            profileBtn.addEventListener("click", () => {
-                alert("Please Login, If registered");
-            });
+                // Logout functionality
+                logoutBtn.addEventListener("click", () => {
+                    auth.signOut().then(() => {
+                        alert("Logged out successfully!");
+                        window.location.href = "login page.html"; // Redirect to login page
+                    }).catch(error => {
+                        console.error("Logout Error", error);
+                    });
+                });
+            } else {
+                // No user logged in
+                document.getElementById("userEmail").textContent = "No user logged in";
+                document.getElementById("userUID").textContent = "";
+
+                // Show alert and don't open the profile modal if no user is logged in
+                profileBtn.addEventListener("click", () => {
+                    alert("Please Login, If registered");
+                });
+            }
+        });
+
+        // Close the profile modal
+        closeModal.onclick = () => {
+            modal.style.display = "none";
+        };
+
+        // Close the modal if clicked outside the modal content
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
+
+        async function addToCart(productId) {
+            const user = auth.currentUser;
+            if (user) {
+                const userId = user.uid;
+                const cartRef = db.collection('carts').doc(userId);
+
+                try {
+                    const cartSnap = await cartRef.get();
+                    if (cartSnap.exists) {
+                        await cartRef.update({
+                            items: firebase.firestore.FieldValue.arrayUnion(productId)
+                        });
+                        console.log("Product added to cart!");
+                        alert("Product added to cart!");
+                    } else {
+                        await cartRef.set({
+                            items: [productId]
+                        });
+                        console.log("New cart created and product added!");
+                        alert("Product added to cart!");
+                    }
+                } catch (error) {
+                    console.error("Error adding product to cart: ", error);
+                    alert("Could not add product to cart. Please try again.");
+                }
+            } else {
+                alert("Please sign in to add products to your cart.");
+            }
+        }
+
+// async function fetchAllProducts() {
+//     try {
+//         const productsSnapshot = await getDocs(collection(db, 'products'));
+//         const productsGrid = document.getElementById("daily-products-grid");
+//         productsGrid.innerHTML = ''; // Clear previous products
+
+//         if (!productsSnapshot.empty) {
+//             productsSnapshot.forEach((doc) => {
+//                 const productData = doc.data();
+//                 productsGrid.innerHTML += `
+//                     <div class="product-card">
+//                         <a class="image-div" href="product-details.html?id=${doc.id}">
+//                             <img src="${productData.imageUrl}" alt="${productData.productName}">
+//                         </a>
+//                         <div class="info-div">
+//                             <h3>${productData.productName}</h3>
+//                             <p>Price: ₹${productData.productPrice}</p>
+//                             <p class="shopName">Shop: ${productData.shopName}</p>
+//                             <button class="add_to_cart" data-product-id="${doc.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
+//                         </div>
+//                     </div>`;
+//             });
+//         } else {
+//             productsGrid.innerHTML = "<p>No products found.</p>";
+//         }
+//     } catch (error) {
+//         console.error("Error fetching all products:", error);
+//     }
+// }
+
+async function fetchNearbyShops() {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const customerRef = doc(db, 'customers', user.uid);
+                const customerDoc = await getDoc(customerRef);
+
+                if (customerDoc.exists()) {
+                    const customerData = customerDoc.data();
+                    const customerCity = customerData.address?.city;
+
+                    if (!customerCity) return;
+
+                    const retailerQuery = query(collection(db, 'retailers'), where('address.city', '==', customerCity));
+                    const retailerSnapshot = await getDocs(retailerQuery);
+
+                    const nearbyShopsGrid = document.getElementById("nearby-shops-grid");
+                    nearbyShopsGrid.innerHTML = '';
+
+                    if (!retailerSnapshot.empty) {
+                        retailerSnapshot.forEach((doc) => {
+                            const shopData = doc.data();
+                            const shopCard = document.createElement("div");
+                            shopCard.classList.add("shop-card");
+                            shopCard.innerHTML = `
+                                <h3>${shopData.businessName || "Unnamed Shop"}</h3>
+                                <p>City: ${shopData.address?.city || "Location Not Available"}</p>
+                                <a href="#daily-products" style="width:100%;">
+                                <button class="add_to_cart" data-shop-id="${doc.id}">View Products</button>
+                                </a>
+                            `;
+                            nearbyShopsGrid.appendChild(shopCard);
+
+                            shopCard.querySelector('.add_to_cart').addEventListener('click', () => {
+                                filterProductsByShop(doc.id, shopData.businessName);
+
+                            });
+                        });
+                    } else {
+                        nearbyShopsGrid.innerHTML = "<p>No nearby shops found in your area.</p>";
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching nearby shops:", error);
+            }
         }
     });
+}
 
-    // Close the profile modal
-    closeModal.onclick = () => {
-        modal.style.display = "none";
-    };
-
-    // Close the modal if clicked outside the modal content
-    window.onclick = (event) => {
-        if (event.target === modal) {
-            modal.style.display = "none";
-        }
-    };
-    
-
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-import { getFirestore, collection, getDocs, doc, updateDoc, setDoc, arrayUnion, getDoc, query, where } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-let allProducts = []; // Store all products globally
-let cities = new Set(); // Use a Set to store unique cities
-let allShops = new Set(); // Store all shops
-
-async function fetchDailyProducts() {
-    const dailyProductGrid = document.getElementById('daily-product-grid');
-    dailyProductGrid.innerHTML = '';
-    
+async function fetchAllProducts() {
+    const productsGrid = document.getElementById("daily-products-grid");
+    if (!productsGrid) {
+        console.error("Error: Products grid not found.");
+        return;
+    }
 
     try {
-        const productsCollection = collection(db, 'products');
-        const productsSnapshot = await getDocs(productsCollection);
-        allProducts = productsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Extract city from shopLocation
-            const city = data.city|| "";
-            cities.add(city);
-             // Extract shopName and add it to the set
-            const shopName = data.shopName || 'Unknown Shop';
-            allShops.add(shopName);
-            return {
-                id: doc.id,
-                name: data.productName || 'Unnamed Product',
-                price: data.productPrice !== undefined ? `₹${data.productPrice}` : 'Price Not Available',
-                imageUrl: data.imageUrl || data.imageURL || 'https://via.placeholder.com/200',
-                shopName: shopName,
-                city: city, // Store the city
-            };
-        });
+        const productsSnapshot = await getDocs(collection(db, 'products'));
+        productsGrid.innerHTML = ''; // Clear previous products
 
-        // Populate the city filter dropdown
-        const cityFilter = document.getElementById('cityFilter');
-        cityFilter.innerHTML = '<option value="">All Cities</option>'; //clear existing options
-
-        // Combine cities from products and shops
-        const combinedCities = new Set([...cities]); //avoid duplicates
-        combinedCities.forEach(city => {
-             if(city){
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                cityFilter.appendChild(option);
-             }
-        });
-        
-        displayDailyProducts(allProducts.slice(0,15)); //show only 15 products
-       
-
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        dailyProductGrid.innerHTML = `<p>Error fetching products. Please try again later.</p>`;
-    }
-}
-
-
-
-function displayDailyProducts(products) {
-    const dailyProductGrid = document.getElementById('daily-product-grid');
-    dailyProductGrid.innerHTML = '';
-    
-        dailyProductGrid.innerHTML = products.map(product => 
-            `<div class="product-card">
-                <a class="image-div" href="product-details.html?id=${product.id}" class="product-card-link">
-                    <img src="${product.imageUrl}" alt="${product.name}">
-                </a>
-
-                <div class="info-div">
-                <h3>${product.name}</h3>
-                <p>Price: ${product.price}</p>
-                <p style="color:white;">Shop: ${product.shopName}</p>
-                <button class="add_to_cart" data-product-id="${product.id}"><i class="fas fa-shopping-cart"></i>  Add To Cart</button>
-                </div>
-            </div>`
-        ).join('');
-    
-
-    // Attach event listeners to the "Add To Cart" buttons
-    const addToCartButtons = dailyProductGrid.querySelectorAll('.add_to_cart');
-    addToCartButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.dataset.productId; 
-            addToCart(productId); 
-        });
-    });
-}
-
-async function addToCart(productId) {
-    const user = auth.currentUser;
-    if (user) {
-        const userId = user.uid;
-        const cartRef = doc(db, 'carts', userId);
-
-        try {
-            const cartSnap = await getDoc(cartRef);
-            if (cartSnap.exists()) {
-                
-                await updateDoc(cartRef, {
-                    items: arrayUnion(productId)
-                });
-                console.log("Product added to cart!");
-                alert("Product added to cart!"); 
-            } else {
-                
-                await setDoc(cartRef, {
-                    items: [productId]
-                });
-                console.log("New cart created and product added!");
-                alert("Product added to cart!"); 
-            }
-        } catch (error) {
-            console.error("Error adding product to cart: ", error);
-            alert("Could not add product to cart. Please try again.");
+        if (!productsSnapshot.empty) {
+            productsSnapshot.forEach((doc) => {
+                const productData = doc.data();
+                productsGrid.innerHTML += `
+                    <div class="product-card">
+                        <a class="image-div" href="product-details.html?id=${doc.id}">
+                            <img src="${productData.imageUrl}" alt="${productData.productName}">
+                        </a>
+                        <div class="info-div">
+                            <h3>${productData.productName}</h3>
+                            <p>Price: ₹${productData.productPrice}</p>
+                            <p class="shopName">Shop: ${productData.shopName}</p>
+                            <button class="add_to_cart" data-product-id="${doc.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            productsGrid.innerHTML = "<p>No products found.</p>";
         }
-    } else {
-        alert("Please sign in to add products to your cart.");
-        
+    } catch (error) {
+        console.error("Error fetching all products:", error);
     }
 }
 
+async function filterProductsByShop(shopId, shopName) {
+    const productsGrid = document.getElementById("daily-products-grid");
+    if (!productsGrid) {
+        console.error("Error: Products grid not found.");
+        return;
+    }
 
+    try {
+        const productsSnapshot = await getDocs(query(collection(db, 'products'), where('shopId', '==', shopId)));
+        productsGrid.innerHTML = ''; // Clear previous products
 
-window.onload = () => {
-    fetchDailyProducts();
-
-    // Attach event listeners to the filter inputs *after* the DOM is fully loaded
-    document.getElementById('cityFilter').addEventListener('change', filterProducts);
-    document.getElementById('searchInput').addEventListener('input', filterProducts);
-    document.getElementById('search-bar-button').addEventListener('click', searchProducts);
-};
-
-
-
-function filterProducts() {
-    const selectedCity = document.getElementById('cityFilter').value;
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-    const filteredProducts = allProducts.filter(product => {
-        const cityMatch = !selectedCity || product.city === selectedCity;
-        const searchMatch = product.shopName.toLowerCase().includes(searchTerm);
-        return cityMatch && searchMatch;
-    });
-
-    displayDailyProducts(filteredProducts);
+        if (!productsSnapshot.empty) {
+            productsSnapshot.forEach((doc) => {
+                const productData = doc.data();
+                productsGrid.innerHTML += `
+                    <div class="product-card">
+                        <a class="image-div" href="product-details.html?id=${doc.id}">
+                            <img src="${productData.imageUrl}" alt="${productData.productName}">
+                        </a>
+                        <div class="info-div">
+                            <h3>${productData.productName}</h3>
+                            <p>Price: ₹${productData.productPrice}</p>
+                            <p class="shopName">Shop: ${shopName}</p>
+                            <button class="add_to_cart" data-product-id="${doc.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            productsGrid.innerHTML = `<p>No products available for ${shopName}.</p>`;
+        }
+    } catch (error) {
+        console.error("Error fetching products for shop:", error);
+    }
 }
 
-
-function searchProducts() {
-  filterProducts();
-}
-</script>
+fetchAllProducts();
+fetchNearbyShops();
+    </script>
 </body>
 </html>
