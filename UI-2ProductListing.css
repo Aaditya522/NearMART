@@ -1,3 +1,19 @@
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* Theme Variables */
+:root {
+  --primary: #7b1fa2;
+  --primary-dark: #4a0072;
+  --accent: #ffca28;
+  --accent-hover: #ffb300;
+  --background: #faf6ff;
+  --card-bg: #ffffff;
+  --card-highlight: #f5eafc;
+  --text-light: #ffffff;
+  --text-dark: #2c2c2c;
+  --shadow: rgba(123, 31, 162, 0.2);
+  --font: 'Poppins', sans-serif;
+}
         body {
             font-family: Arial, sans-serif;
             padding: 5px 5px 5px 5px;
@@ -7,7 +23,7 @@
         }
     
         .promo-banner {
-            background-color: #6a1b9a;
+            background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
             color: #fff;
             text-align: start;
             margin: 0px 0px 20px 0px;
@@ -272,6 +288,7 @@
 
         .popup img {
             width: 80%; height: 180px;
+            border-radius: 5px;
         }
 
         /* .product-pop{
@@ -295,7 +312,7 @@
             height:400px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             cursor: pointer;
             font-size:smaller;
@@ -318,6 +335,11 @@
             color:rgb(103, 4, 156);
             font-size: 10;
             font-weight: 800;
+        }
+
+        .product-pop img{
+            width: 90%;
+            height:100%;
         }
 
         /* Media Queries for Responsive Design */
@@ -422,18 +444,27 @@
                 padding: 8px;
             }
     
-            .product-card {
+        .product-card {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding:2px 0px 0px 0px;
             border-radius: 5px;
             width: 40%;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             cursor: pointer;
             box-shadow: 4px 3px 11px #c5c5c5, -6px -6px 12px #ffffff;
             font-size:smaller;
+        }
+
+        .product-pop{
+            padding:0px;
+            justify-content: space-between;
+            min-width:140px;
+            min-height: 270px;
+            max-height:270px;
+            margin:2px;
         }
     
         .filters {
@@ -459,5 +490,21 @@
         }
         .popup img {
             width: 90%; height: 140px;
+        }
+
+                .add_to_cart{
+            width: 100%;
+            min-height: 2.5em;
+            border:2px solid rgb(255, 21, 21);
+            color: rgb(255, 21, 21);
+            border-radius: 5px;
+            font-size: 15px;
+            font-family: inherit;
+            font-weight: 550;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            margin:10px 0px 0px 0px;
+            transition: .3s;
         }
         }

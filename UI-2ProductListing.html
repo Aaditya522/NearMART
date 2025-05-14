@@ -165,14 +165,11 @@ function displaySearchResults(products) {
     const popupContent = document.getElementById('popupContent');
     popupContent.innerHTML = products.map(p => `
             <div class="product-pop">
-                <div class="image-div">
-                    <img src="${p.imageUrl}" alt="${p.productName}">
-                </div>
+                <a class="image-div" href="product-details.html?id=${p.id}" class="product-card-link">
+                    <img src="${p.imageUrl}" alt="${p.name}">
+                </a>
                 <h3>${p.productName}</h3>
                 <p>Price: ₹${p.productPrice}</p>
-                <a href="product-details.html?id=${p.id}" class="product-pop-link">
-                    <button>View Product</button>
-                </a>
                 <button class="add_to_cart" data-product-id="${p.id}"><i class="fas fa-shopping-cart"></i>  Add To Cart</button>
             </div>
     `).join('');
