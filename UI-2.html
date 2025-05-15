@@ -41,7 +41,7 @@
 
         <section id="nearbyShops" class="section">
     <div class="container">
-        <h2>From Market to Your Doorstep, Nearby Shops!</h2>
+        <h2>Nearby Products, Just a Search Away</h2>
         <div class="shops-list"  id="nearby-shops-grid"></div>
     </div>
 </section>
@@ -158,34 +158,72 @@
         };
 
         async function addToCart(productId) {
-            const user = auth.currentUser;
-            if (user) {
-                const userId = user.uid;
-                const cartRef = db.collection('carts').doc(userId);
+    const user = auth.currentUser;
+    if (user) {
+        const userId = user.uid;
+        const cartRef = doc(db, 'carts', userId); // Corrected Firestore reference
 
-                try {
-                    const cartSnap = await cartRef.get();
-                    if (cartSnap.exists) {
-                        await cartRef.update({
-                            items: firebase.firestore.FieldValue.arrayUnion(productId)
-                        });
-                        console.log("Product added to cart!");
-                        alert("Product added to cart!");
-                    } else {
-                        await cartRef.set({
-                            items: [productId]
-                        });
-                        console.log("New cart created and product added!");
-                        alert("Product added to cart!");
-                    }
-                } catch (error) {
-                    console.error("Error adding product to cart: ", error);
-                    alert("Could not add product to cart. Please try again.");
-                }
+        try {
+            const cartSnap = await getDoc(cartRef);
+            if (cartSnap.exists()) {
+                await updateDoc(cartRef, {
+                    items: arrayUnion(productId)
+                });
+                console.log("Product added to cart!");
+                alert("Product added to cart!");
             } else {
-                alert("Please sign in to add products to your cart.");
+                await setDoc(cartRef, {
+                    items: [productId]
+                });
+                console.log("New cart created and product added!");
+                alert("Product added to cart!");
             }
+        } catch (error) {
+            console.error("Error adding product to cart: ", error);
+            alert("Could not add product to cart. Please try again.");
         }
+    } else {
+        alert("Please sign in to add products to your cart.");
+    }
+}
+
+// Attach event listeners to dynamically generated "Add to Cart" buttons
+document.addEventListener("click", (event) => {
+    if (event.target.classList.contains("add_to_cart")) {
+        const productId = event.target.getAttribute("data-product-id");
+        addToCart(productId);
+    }
+});
+
+        // async function addToCart(productId) {
+        //     const user = auth.currentUser;
+        //     if (user) {
+        //         const userId = user.uid;
+        //         const cartRef = db.collection('carts').doc(userId);
+
+        //         try {
+        //             const cartSnap = await cartRef.get();
+        //             if (cartSnap.exists) {
+        //                 await cartRef.update({
+        //                     items: firebase.firestore.FieldValue.arrayUnion(productId)
+        //                 });
+        //                 console.log("Product added to cart!");
+        //                 alert("Product added to cart!");
+        //             } else {
+        //                 await cartRef.set({
+        //                     items: [productId]
+        //                 });
+        //                 console.log("New cart created and product added!");
+        //                 alert("Product added to cart!");
+        //             }
+        //         } catch (error) {
+        //             console.error("Error adding product to cart: ", error);
+        //             alert("Could not add product to cart. Please try again.");
+        //         }
+        //     } else {
+        //         alert("Please sign in to add products to your cart.");
+        //     }
+        // }
 
 // async function fetchAllProducts() {
 //     try {
