@@ -283,7 +283,7 @@ async function fetchNearbyShops() {
                                 <h3>${shopData.businessName || "Unnamed Shop"}</h3>
                                 <p>City: ${shopData.address?.city || "Location Not Available"}</p>
                                 <a href="#daily-products" style="width:100%;">
-                                    <button class="add_to_cart" id="view-products" data-shop-id="${doc.id}">View Products</button>
+                                    <button class="view-products" id="view-products" data-shop-id="${doc.id}">View Products</button>
                                 </a>
                             `;
                             nearbyShopsGrid.appendChild(shopCard);

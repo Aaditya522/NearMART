@@ -339,6 +339,46 @@ main{
  color: #ffffff;
 }
 
+.view-products{
+            width: 100%;
+            min-height: 2.8em;
+            border:2px solid rgb(255, 255, 255);
+            color: rgb(255, 21, 21);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            font-weight: 550;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            margin:10px 0px 0px 0px;
+            transition: .3s;
+        }
+        .view-products:hover{
+            color: #ffffff;
+        }
+        
+.view-products::before {
+ content: '';
+ width: 0;
+ height: 3em;
+ border-radius: 5px;
+ position: absolute;
+ top: 0;
+ left: 0;
+ background-image: linear-gradient(to right, #d80f0f 0%, #f94747 100%);
+ transition: .5s ease;
+ display: block;
+ z-index: -1;
+}
+.view-products:hover::before {
+ width: 100%;
+}
+
+.view-products:hover{
+ color: #ffffff;
+}
+
 
 .shops-list{
   display: flex;
