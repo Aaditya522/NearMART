@@ -30,15 +30,16 @@
         <a href="UI-2.html">
             <div class="footer-icon"><i class="fas fa-home"></i> Home</div>
         </a>
-        <a href="Cart.html">
-            <div class="footer-icon"><i class="fas fa-shopping-cart"></i> Cart</div>
-        </a>
 
         <div class="filters">
             <select  class="categoryFilter" id="categoryFilter" onchange="filterProducts()">
                 <option value="">All Products</option>
             </select>
         </div>
+
+        <a href="Cart.html">
+            <div class="footer-icon"><i class="fas fa-shopping-cart"></i> Cart</div>
+        </a>
     </footer>
 
         <div class="popup" id="popup"> <!--POP-UP-->
@@ -69,6 +70,7 @@ const db = getFirestore(app);
 const auth = getAuth(app); // Initialize Firebase Auth
 
 let allProducts = [];
+
 async function fetchProducts() {
     const productGrid = document.getElementById('productGrid');
     productGrid.innerHTML = '';
@@ -97,9 +99,11 @@ function displayProducts(products) {
                 <a class="image-div" href="product-details.html?id=${product.id}" class="product-card-link">
                     <img src="${product.imageUrl}" alt="${product.name}">
                 </a>
+                <div class="info-div">
                 <h3>${product.name}</h3>
                 <p>Price: ${product.price}</p>
                 <button class="add_to_cart" data-product-id="${product.id}"><i class="fas fa-shopping-cart"></i> Add To Cart</button>
+                </div>
             </div>
     `).join('');
 
