@@ -530,6 +530,22 @@
             min-height:320px;
             max-height: 320px;
             font-size:smaller;
+            text-align: center;
+        }
+
+        .product-card h3{
+            max-height: 50px;
+            overflow: scroll;
+            margin:10px 10px 0px 10px;
+            color:rgb(255, 255, 255);
+            font-size: smaller;
+        }
+
+        .product-card p{
+            color:rgb(250, 235, 32);
+            font-size: xx-small;
+            font-weight: 800;
+            margin: 10px 0px;
         }
 
         .info-div {
