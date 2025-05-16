@@ -264,34 +264,52 @@ async function fetchNearbyShops() {
 
                 if (customerDoc.exists()) {
                     const customerData = customerDoc.data();
-                    const customerCity = customerData.address?.city;
+                    const customerCity = customerData.address?.city?.toLowerCase(); // Lowercase the customer city
 
                     if (!customerCity) return;
 
-                    const retailerQuery = query(collection(db, 'retailers'), where('address.city', '==', customerCity));
+                    // Fetch all retailers (since we can't do case-insensitive directly in Firestore)
+                    const retailerQuery = query(collection(db, 'retailers'));
                     const retailerSnapshot = await getDocs(retailerQuery);
 
                     const nearbyShopsGrid = document.getElementById("nearby-shops-grid");
                     nearbyShopsGrid.innerHTML = '';
 
                     if (!retailerSnapshot.empty) {
+                        let hasNearbyShops = false;
+
                         retailerSnapshot.forEach((doc) => {
                             const shopData = doc.data();
-                            const shopCard = document.createElement("div");
-                            shopCard.classList.add("shop-card");
-                            shopCard.innerHTML = `
-                                <h3>${shopData.businessName || "Unnamed Shop"}</h3>
-                                <p>City: ${shopData.address?.city || "Location Not Available"}</p>
-                                <a href="#daily-products" style="width:100%;">
-                                    <button class="view-products" id="view-products" data-shop-id="${doc.id}">View Products</button>
-                                </a>
-                            `;
-                            nearbyShopsGrid.appendChild(shopCard);
+                            const retailerCity = shopData.address?.city?.toLowerCase(); // Lowercase retailer city
 
-                            document.getElementById('view-products').addEventListener('click', () => {
-                                filterProductsByShop(doc.id, shopData.businessName);
-                            });
+                            if (retailerCity === customerCity) {
+                                hasNearbyShops = true;
+                                const shopCard = document.createElement("div");
+                                shopCard.classList.add("shop-card");
+                                shopCard.innerHTML = `
+                                    <h3>${shopData.businessName || "Unnamed Shop"}</h3>
+                                    <p>City: ${shopData.address?.city || "Location Not Available"}</p>
+                                    <a href="#daily-products" style="width:100%;">
+                                        <button class="view-products" data-shop-id="${doc.id}">View Products</button>
+                                    </a>
+                                `;
+                                nearbyShopsGrid.appendChild(shopCard);
+                            }
                         });
+
+                        if (!hasNearbyShops) {
+                            nearbyShopsGrid.innerHTML = "<p>No nearby shops found in your area.</p>";
+                        }
+
+                        // Event delegation for view products button
+                        nearbyShopsGrid.addEventListener('click', (event) => {
+                            if (event.target.classList.contains('view-products')) {
+                                const shopId = event.target.getAttribute('data-shop-id');
+                                const shopName = event.target.closest('.shop-card').querySelector('h3').textContent;
+                                filterProductsByShop(shopId, shopName);
+                            }
+                        });
+
                     } else {
                         nearbyShopsGrid.innerHTML = "<p>No nearby shops found in your area.</p>";
                     }
@@ -302,6 +320,7 @@ async function fetchNearbyShops() {
         }
     });
 }
+
 
 async function fetchAllProducts() {
     const productsGrid = document.getElementById("daily-products-grid");
