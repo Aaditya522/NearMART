@@ -76,15 +76,20 @@
         </a>
     </div>
 
-    <div id="userProfileModal">
-        <div>
-            <span id="closeProfileModal">&times;</span>
-            <h1>User Profile</h1>
-            <p><strong>Email:</strong></p><span id="userEmail">Not logged in</span>
-            <p><strong>UID:</strong></p><span id="userUID"></span>
-            <button id="logoutBtn" style="margin-top:20px; padding:10px 20px;">Logout</button>
+        <div id="userProfileModal">
+            <div style="display: flex;flex-direction: column;justify-content: left; align-items: center;">
+                <span id="closeProfileModal">&times;</span>
+                <h1>User Profile</h1>
+                <div class="details-fields" style="display:flex; flex-direction:column; border: 2px solid transparent; padding:10px;">
+                <label><strong>Email: </strong><span style="font-size: smaller;" id="userEmail"> Not logged in</span></label>
+                <label><strong>UID: </strong><span style=" font-size: smaller;" id="userUID"></span></label>
+                <label><strong>City: </strong><input type="text" id="userCity" placeholder="Enter your city" style="width:100%; padding:4px; border:2px solid rgb(56, 56, 56); border-radius: 5px;"></label>
+                <label><strong>Phone: </strong><input type="text" id="userPhone" placeholder="Enter your phone number" style="width:100%; padding:4px; border:2px solid rgb(56, 56, 56); border-radius: 5px;"></label>
+                </div>
+                <button id="updateInfoBtn" style="margin-top:20px; padding:10px 20px;">Update Info</button>
+                <button id="logoutBtn" style="margin-top:20px; padding:10px 20px;">Logout</button>
+            </div>
         </div>
-    </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -113,11 +118,28 @@
         const logoutBtn = document.getElementById("logoutBtn");
 
         // Listen for auth state changes
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 // Display user info if logged in
                 document.getElementById("userEmail").textContent = user.email;
                 document.getElementById("userUID").textContent = user.uid;
+
+            const userDoc = await getDoc(doc(db, "customers", user.uid));
+            if (userDoc.exists()) {
+                document.getElementById("userCity").value = userDoc.data().address?.city || "";
+                document.getElementById("userPhone").value = userDoc.data().phone || "";
+            }
+
+            document.getElementById("updateInfoBtn").addEventListener("click", async () => {
+                const newCity = document.getElementById("userCity").value.trim();
+                const newPhone = document.getElementById("userPhone").value.trim();
+
+                await updateDoc(doc(db, "customers", user.uid), {
+                    "address.city": newCity || "",
+                    "phone": newPhone || ""
+                });
+                alert("Information updated successfully!");
+            });
 
                 // Open modal when profile icon is clicked
                 profileBtn.addEventListener("click", () => {
